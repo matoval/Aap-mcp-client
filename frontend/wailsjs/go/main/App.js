@@ -5,3 +5,7 @@
 export function GetModels(arg1) {
   return window['go']['main']['App']['GetModels'](arg1);
 }
+
+export function GetToolList() {
+  return window['go']['main']['App']['GetToolList']();
+}

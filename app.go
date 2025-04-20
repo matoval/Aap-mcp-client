@@ -5,13 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"time"
+
+	"github.com/mark3labs/mcp-go/client"
+	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // App struct
 type App struct {
 	ctx context.Context
+	MCPClient *client.Client
 }
 
 type ModelsResponse struct {
@@ -45,6 +50,55 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+
+	c, err := client.NewStdioMCPClient(
+		"./aap-mcp-server",
+		[]string{},
+	)
+	if err != nil {
+		log.Fatalf("Failed to create client: %v", err)
+	}
+	defer c.Close()
+
+	a.MCPClient = c
+
+	// Create context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Initialize the client
+	fmt.Println("Initializing client...")
+	initRequest := mcp.InitializeRequest{}
+	initRequest.Params.ProtocolVersion = mcp.LATEST_PROTOCOL_VERSION
+	initRequest.Params.ClientInfo = mcp.Implementation{
+		Name:    "AAP Controller",
+		Version: "0.1.0",
+	}
+
+	initResult, err := c.Initialize(ctx, initRequest)
+	if err != nil {
+		log.Fatalf("Failed to initialize: %v", err)
+	}
+	fmt.Printf(
+		"Initialized with server: %s %s\n\n",
+		initResult.ServerInfo.Name,
+		initResult.ServerInfo.Version,
+	)
+}
+
+func (a *App) GetToolList() (*mcp.ListToolsResult, error) {
+	// List Tools
+	fmt.Println("Listing available tools...")
+	toolsRequest := mcp.ListToolsRequest{}
+	tools, err := a.MCPClient.ListTools(a.ctx, toolsRequest)
+	if err != nil {
+		return nil, err
+	}
+	for _, tool := range tools.Tools {
+		fmt.Printf("- %s: %s\n", tool.Name, tool.Description)
+	}
+
+	return tools, nil
 }
 
 // Greet returns a greeting for the given name
