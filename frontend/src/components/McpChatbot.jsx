@@ -11,7 +11,7 @@ import Message from '@patternfly/virtual-assistant/dist/dynamic/Message';
 import ChatbotHeader, {ChatbotHeaderActions, ChatbotHeaderSelectorDropdown} from '@patternfly/virtual-assistant/dist/dynamic/ChatbotHeader';
 import robotIcon from '../robot.png'
 import userIcon from '../user.png'
-import {GetModels} from '../../wailsjs/go/main/App'
+import {GetModels, GetToolList} from '../../wailsjs/go/main/App'
 
 export const McpChatbot = () => {
   const [ollamaUrl, setOllamaUrl] = React.useState('');
@@ -32,7 +32,6 @@ export const McpChatbot = () => {
   }, [messages]);
   useEffect(() => {
     if (ollamaUrl !== "") {
-      console.log(ollamaUrl)
       GetModels(ollamaUrl).then((data) => {
         data.models.forEach(model => setAvailableModels(cur =>  [...cur, model.name]))
       })

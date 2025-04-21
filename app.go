@@ -58,13 +58,8 @@ func (a *App) startup(ctx context.Context) {
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)
 	}
-	defer c.Close()
 
 	a.MCPClient = c
-
-	// Create context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
 
 	// Initialize the client
 	fmt.Println("Initializing client...")
@@ -84,6 +79,19 @@ func (a *App) startup(ctx context.Context) {
 		initResult.ServerInfo.Name,
 		initResult.ServerInfo.Version,
 	)
+
+	go func(ctx context.Context) {
+		for {
+			select {
+			case <-ctx.Done():
+				fmt.Println("Mcp server closed")
+				c.Close()
+				return
+			default:
+				time.Sleep(500*time.Millisecond)
+			}
+		}
+	}(a.ctx)
 }
 
 func (a *App) GetToolList() (*mcp.ListToolsResult, error) {
