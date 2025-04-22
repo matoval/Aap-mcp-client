@@ -24,6 +24,41 @@ export const McpChatbot = () => {
   const displayMode = ChatbotDisplayMode.embedded;
 
   useEffect(() => {
+    if (selectedModel !== 'Select a model') {
+      (async () => {
+        const tools = await GetToolList()
+        try {
+          const res = await fetch(ollamaUrl + '/api/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'POST'
+            },
+            body: JSON.stringify({
+              "messages": [{
+                "role:": "user",
+                "content": "Here is a list of tools that are available"
+              }],
+              "model": selectedModel,
+              "tools": [{
+                "type": "function",
+                "function": tools.tools[0]
+              }]
+            })
+          })
+          const data = await res.json();
+          setMessages(msg => {
+            return [...msg, data]
+          });
+        } catch (err) {
+          console.error('Error:', err)
+        }
+      })()
+    }
+  }, [selectedModel])
+
+  useEffect(() => {
     if (messages.length > 2) {
       scrollToBottomRef.current?.scrollIntoView({
         behavior: 'smooth'
