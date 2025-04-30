@@ -9,3 +9,11 @@ export function GetModels(arg1) {
 export function GetToolList() {
   return window['go']['main']['App']['GetToolList']();
 }
+
+export function McpCallTool(arg1) {
+  return window['go']['main']['App']['McpCallTool'](arg1);
+}
+
+export function OllamaChat(arg1, arg2) {
+  return window['go']['main']['App']['OllamaChat'](arg1, arg2);
+}

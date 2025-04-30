@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -109,7 +110,6 @@ func (a *App) GetToolList() (*mcp.ListToolsResult, error) {
 	return tools, nil
 }
 
-// Greet returns a greeting for the given name
 func (a *App) GetModels(ollamaUrl string) (*ModelsResponse, error) {
 	resp, err := http.Get(ollamaUrl + "/api/tags")
 	if err != nil {
@@ -127,4 +127,27 @@ func (a *App) GetModels(ollamaUrl string) (*ModelsResponse, error) {
 	}
 
 	return &data, nil
+}
+
+func (a *App) OllamaChat(ollamaUrl string, jsonBody string) (string, error) {
+	fmt.Println(jsonBody)
+	resp, err := http.Post(fmt.Sprintf("%s/api/chat", ollamaUrl), "application/json", bytes.NewBuffer([]byte(jsonBody)))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	return string(body), err
+}
+
+func (a *App) McpCallTool(toolRequest mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	// var mcpToolRequest mcp.CallToolRequest
+	// err := json.Unmarshal([]byte(toolRequest), &mcpToolRequest)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	result, err := a.MCPClient.CallTool(a.ctx, toolRequest)
+
+	return result, err
 }

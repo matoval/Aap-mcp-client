@@ -98,6 +98,57 @@ export namespace main {
 
 export namespace mcp {
 	
+	export class CallToolRequest {
+	    method: string;
+	    // Go type: struct { Meta *struct { ProgressToken mcp
+	    params?: any;
+	    params: struct { Name string "json:\"name\""; Arguments map[string]interface {} "json:\"arguments,omitempty\""; Meta *struct { ProgressToken mcp.;
+	
+	    static createFrom(source: any = {}) {
+	        return new CallToolRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.method = source["method"];
+	        this.params = this.convertValues(source["params"], Object);
+	        this.params = this.convertValues(source["params"], Object);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class CallToolResult {
+	    _meta?: Record<string, any>;
+	    content: any[];
+	    isError?: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new CallToolResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this._meta = source["_meta"];
+	        this.content = source["content"];
+	        this.isError = source["isError"];
+	    }
+	}
 	export class ToolAnnotation {
 	    title?: string;
 	    readOnlyHint?: boolean;
@@ -206,6 +257,23 @@ export namespace mcp {
 	}
 	
 	
+
+}
+
+export namespace struct { ProgressToken mcp {
+	
+	export class  {
+	    progressToken?: any;
+	
+	    static createFrom(source: any = {}) {
+	        return new (source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.progressToken = source["progressToken"];
+	    }
+	}
 
 }
 

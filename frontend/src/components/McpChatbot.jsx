@@ -11,7 +11,7 @@ import Message from '@patternfly/virtual-assistant/dist/dynamic/Message';
 import ChatbotHeader, {ChatbotHeaderActions, ChatbotHeaderSelectorDropdown} from '@patternfly/virtual-assistant/dist/dynamic/ChatbotHeader';
 import robotIcon from '../robot.png'
 import userIcon from '../user.png'
-import {GetModels, GetToolList} from '../../wailsjs/go/main/App'
+import {GetModels, GetToolList, OllamaChat, McpCallTool} from '../../wailsjs/go/main/App'
 
 export const McpChatbot = () => {
   const [ollamaUrl, setOllamaUrl] = React.useState('');
@@ -20,40 +20,15 @@ export const McpChatbot = () => {
   const [selectedModel, setSelectedModel] = React.useState('Select a model');
   const [isSendButtonDisabled, setIsSendButtonDisabled] = React.useState(false);
   const [announcement, setAnnouncement] = React.useState();
+  const [tools, setTools] = React.useState();
   const scrollToBottomRef = React.useRef(null);
   const displayMode = ChatbotDisplayMode.embedded;
 
   useEffect(() => {
     if (selectedModel !== 'Select a model') {
       (async () => {
-        const tools = await GetToolList()
-        try {
-          const res = await fetch(ollamaUrl + '/api/chat', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Access-Control-Allow-Origin': '*',
-              'Access-Control-Allow-Methods': 'POST'
-            },
-            body: JSON.stringify({
-              "messages": [{
-                "role:": "user",
-                "content": "Here is a list of tools that are available"
-              }],
-              "model": selectedModel,
-              "tools": [{
-                "type": "function",
-                "function": tools.tools[0]
-              }]
-            })
-          })
-          const data = await res.json();
-          setMessages(msg => {
-            return [...msg, data]
-          });
-        } catch (err) {
-          console.error('Error:', err)
-        }
+        const toolsList = await GetToolList()
+        setTools(toolsList)
       })()
     }
   }, [selectedModel])
@@ -103,26 +78,37 @@ export const McpChatbot = () => {
     };
     setMessages(msg => [...msg, loadingMsg])
     setAnnouncement(`Message from User: ${message}. Message from Bot is loading.`);
-    try {
-      const res = await fetch(ollamaUrl + '/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST'
-        },
-        body: JSON.stringify({
-          "messages": newMessages,
-          "model": selectedModel,
-          "stream": false
-      })
-      })
-      const data = await res.json();
+    const body = JSON.stringify({
+      "messages": newMessages,
+      "model": selectedModel,
+      "stream": false,
+      "tools": [{
+        "type": "function",
+        "function": tools
+      }]
+    })
+    const res = await OllamaChat(ollamaUrl, body)
+    const data = JSON.parse(res)
+    console.log(data)
+    if (data.message.tool_calls?.length > 0) {
+      for (const toolCall of data.message.tool_calls) {
+        const toolFunc = toolCall.function.name;
+        const args = toolCall.function.arguments;
+
+        const toolRequest = {
+          "params": {
+            "name": toolFunc,
+            "arguments": args
+          }
+        }
+        console.log(toolRequest)
+        const resp = await McpCallTool(toolRequest)
+        console.log(resp);
+      }
+    } else if (data.message.content !== "") {
       setMessages(msg => {
         return msg.map(m => m.id === loadingMsg.id ? {...m, isLoading: false, content: data.message.content}: m)
       });
-    } catch (err) {
-      console.error('Error:', err)
     }
     setAnnouncement(`Message from Bot: API response goes here`);
     setIsSendButtonDisabled(false);

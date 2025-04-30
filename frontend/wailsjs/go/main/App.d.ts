@@ -6,3 +6,7 @@ import {mcp} from '../models';
 export function GetModels(arg1:string):Promise<main.ModelsResponse>;
 
 export function GetToolList():Promise<mcp.ListToolsResult>;
+
+export function McpCallTool(arg1:mcp.CallToolRequest):Promise<mcp.CallToolResult>;
+
+export function OllamaChat(arg1:string,arg2:string):Promise<string>;
