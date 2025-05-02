@@ -1,6 +1,5 @@
 html {
     background-color: rgba(27, 38, 54, 1);
-    text-align: center;
     color: white;
 }
 
@@ -22,7 +21,7 @@ body {
 
 #App {
     min-height: 100vh;
-    text-align: center;
+    text-align: left;
 }
 
 #root {
@@ -31,4 +30,9 @@ body {
 
 .ph-chatbot, .pf-chatbot--embedded {
     min-height: 100vh !important;
+}
+
+.ph-chatbot__content {
+    padding-left: 5rem !important;
+    padding-right: 5rem !important;
 }

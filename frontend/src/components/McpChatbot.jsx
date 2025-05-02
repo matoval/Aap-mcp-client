@@ -103,7 +103,10 @@ export const McpChatbot = () => {
         }
         console.log(toolRequest)
         const resp = await McpCallTool(toolRequest)
-        console.log(resp);
+        console.log(resp)
+        setMessages(msg => {
+          return msg.map(m => m.id === loadingMsg.id ? {...m, isLoading: false, content: resp.content[0].text}: m)
+        });
       }
     } else if (data.message.content !== "") {
       setMessages(msg => {

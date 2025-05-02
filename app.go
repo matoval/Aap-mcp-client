@@ -142,11 +142,6 @@ func (a *App) OllamaChat(ollamaUrl string, jsonBody string) (string, error) {
 }
 
 func (a *App) McpCallTool(toolRequest mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	// var mcpToolRequest mcp.CallToolRequest
-	// err := json.Unmarshal([]byte(toolRequest), &mcpToolRequest)
-	// if err != nil {
-	// 	return nil, err
-	// }
 	result, err := a.MCPClient.CallTool(a.ctx, toolRequest)
 
 	return result, err
