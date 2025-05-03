@@ -139,7 +139,7 @@ export const McpChatbot = () => {
           {messages.map((message, index) => {
             if (index === messages.length - 1) {
               return <>
-                                  <div ref={scrollToBottomRef}></div>
+                                  <div ref={scrollToBottomRef} key={"ref" + message.id}></div>
                                   <Message key={message.id} {...message} />
                                 </>;
             }
@@ -148,7 +148,7 @@ export const McpChatbot = () => {
         </MessageBox>
       </ChatbotContent>
       <ChatbotFooter>
-        <MessageBar onSendMessage={handleSend} hasMicrophoneButton isSendButtonDisabled={isSendButtonDisabled} />
+        <MessageBar onSendMessage={handleSend} isSendButtonDisabled={isSendButtonDisabled} hasAttachButton={false} />
       </ChatbotFooter>
     </Chatbot>
   );
