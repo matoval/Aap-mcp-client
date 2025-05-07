@@ -6,7 +6,7 @@ export const isValidTool = (tool, toolsList) => {
   const toolFound = toolsList.tools.find(t => t.name === tool.function.name);
 
   if (!toolFound) {
-    throw new Error(`Tool ${toolReponse.name} not found.`);
+    throw new Error(`Tool ${tool.function.name} not found.`);
   }
 
   const validate = ajv.compile(toolFound.inputSchema);

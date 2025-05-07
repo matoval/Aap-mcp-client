@@ -24,7 +24,7 @@ export const McpChatbot = () => {
   const [tools, setTools] = React.useState();
   const scrollToBottomRef = React.useRef(null);
   const displayMode = ChatbotDisplayMode.embedded;
-  const maxRetries = 30;
+  const maxRetries = 10;
 
   useEffect(() => {
     if (selectedModel !== 'Select a model') {
@@ -57,21 +57,10 @@ export const McpChatbot = () => {
     return id.toString();
   };
 
-  const ollamaChatResponse = async (prompt, prevMessages=[], attempts = 0) => {
+  const ollamaChatResponse = async (prompt, attempts = 1) => {
     console.log(prompt)
-    const newPrompt = [...prompt]
-    if (prevMessages.length > 0) {
-      const context = {
-        id: generateId(),
-        role: 'context',
-        content: `Here is the context from the previous conversation ${prevMessages}`,
-        name: 'context',
-        avatar: userIcon,
-      }
-      newPrompt.unshift(context)
-    }
     const body = JSON.stringify({
-      "messages": newPrompt,
+      "messages": prompt,
       "model": selectedModel,
       "stream": false,
       "tools": [{
@@ -83,23 +72,26 @@ export const McpChatbot = () => {
     const res = await OllamaChat(ollamaUrl, body)
     const data = JSON.parse(res)
     console.log(data)
-    for (const tool of data.message.tool_calls) {
-      if (!isValidTool(tool, tools)) {
-        if (attempts < maxRetries) {
-          const newPromptContent = `Toolcall ${tool.function.name} wasn't valid for the inputSchema returned by the mcp server. Please return tool_call for this prompt again and this time only return value properties according to the inputSchema. Make sure the properties names and value types are correct. Prompt: ${prompt.content}`
-          prompt.content = newPromptContent
-          console.warn(`Invalid tool value, retrying. Total retried attempts: ${attempts}`)
-          return await ollamaChatResponse(prompt, attempts + 1)
-        } else {
-          throw new Error('Max retries reached with invalid tool value.')
+    if (data?.message?.tool_calls?.length > 0) {
+      for (const tool of data.message.tool_calls) {
+        if (!isValidTool(tool, tools)) {
+          if (attempts < maxRetries) {
+            const newPromptContent = `Toolcall ${tool.function.name} wasn't valid for the inputSchema returned by the mcp server. Please return tool_call for this prompt again and this time only return value properties according to the inputSchema. Make sure the properties names and value types are correct. Prompt: ${prompt.content}`
+            prompt.content = newPromptContent
+            console.warn(`Invalid tool value, retrying. Total retried attempts: ${attempts}`)
+            return await ollamaChatResponse(prompt, attempts + 1)
+          } else {
+            throw new Error('Max retries reached with invalid tool value.')
+          }
         }
       }
+    } else {
+      return await ollamaChatResponse(prompt, attempts + 1)
     }
     return data;
   }
 
   const handleSend = async message => {
-    const prevMessage = message;
     setIsSendButtonDisabled(true);
     const newMessages = [];
     const date = new Date();
@@ -123,7 +115,7 @@ export const McpChatbot = () => {
     };
     setMessages(msg => [...msg, loadingMsg])
     setAnnouncement(`Message from User: ${message}. Message from Bot is loading.`);
-    const data = await ollamaChatResponse(newMessages, prevMessage)
+    const data = await ollamaChatResponse(newMessages)
     if (data.message.tool_calls?.length > 0) {
       const allReponse = []
       for (const toolCall of data.message.tool_calls) {
