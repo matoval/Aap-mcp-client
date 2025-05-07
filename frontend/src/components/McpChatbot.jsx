@@ -57,10 +57,21 @@ export const McpChatbot = () => {
     return id.toString();
   };
 
-  const ollamaChatResponse = async (prompt, attempts = 0) => {
+  const ollamaChatResponse = async (prompt, prevMessages=[], attempts = 0) => {
     console.log(prompt)
+    const newPrompt = [...prompt]
+    if (prevMessages.length > 0) {
+      const context = {
+        id: generateId(),
+        role: 'context',
+        content: `Here is the context from the previous conversation ${prevMessages}`,
+        name: 'context',
+        avatar: userIcon,
+      }
+      newPrompt.unshift(context)
+    }
     const body = JSON.stringify({
-      "messages": prompt,
+      "messages": newPrompt,
       "model": selectedModel,
       "stream": false,
       "tools": [{
@@ -88,6 +99,7 @@ export const McpChatbot = () => {
   }
 
   const handleSend = async message => {
+    const prevMessage = message;
     setIsSendButtonDisabled(true);
     const newMessages = [];
     const date = new Date();
@@ -111,7 +123,7 @@ export const McpChatbot = () => {
     };
     setMessages(msg => [...msg, loadingMsg])
     setAnnouncement(`Message from User: ${message}. Message from Bot is loading.`);
-    const data = await ollamaChatResponse(newMessages)
+    const data = await ollamaChatResponse(newMessages, prevMessage)
     if (data.message.tool_calls?.length > 0) {
       const allReponse = []
       for (const toolCall of data.message.tool_calls) {
@@ -125,12 +137,23 @@ export const McpChatbot = () => {
           }
         }
         console.log(toolRequest)
-        const resp = await McpCallTool(toolRequest)
-        console.log(resp)
-        allReponse.push(resp.content[0].text)
+        try {
+          const resp = await McpCallTool(toolRequest)
+        
+          if (resp?.content?.[0]?.text) {
+            allReponse.push(resp.content[0].text)
+          } else {
+            allReponse.push("Missing content or text in response")
+          }
+        
+        } catch (error) {
+          console.error("McpCallTool error:", error)
+          allReponse.push(error.toString())
+        }
+        
       }
       setMessages(msg => {
-        return msg.map(m => m.id === loadingMsg.id ? {...m, isLoading: false, content: allReponse}: m)
+        return msg.map(m => m.id === loadingMsg.id ? {...m, isLoading: false, content: allReponse.join('\n\n')}: m)
       });
     } else if (data.message.content !== "") {
       setMessages(msg => {
