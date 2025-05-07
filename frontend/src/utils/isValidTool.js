@@ -13,5 +13,6 @@ export const isValidTool = (tool, toolsList) => {
   const isValid = validate(tool.function.arguments);
 
   console.log(isValid)
+  console.log(tool)
   return isValid
 }

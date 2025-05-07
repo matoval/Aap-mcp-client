@@ -24,7 +24,7 @@ export const McpChatbot = () => {
   const [tools, setTools] = React.useState();
   const scrollToBottomRef = React.useRef(null);
   const displayMode = ChatbotDisplayMode.embedded;
-  const maxRetries = 5;
+  const maxRetries = 30;
 
   useEffect(() => {
     if (selectedModel !== 'Select a model') {
@@ -68,6 +68,7 @@ export const McpChatbot = () => {
         "function": tools
       }]
     })
+    console.log(body)
     const res = await OllamaChat(ollamaUrl, body)
     const data = JSON.parse(res)
     console.log(data)
@@ -112,6 +113,7 @@ export const McpChatbot = () => {
     setAnnouncement(`Message from User: ${message}. Message from Bot is loading.`);
     const data = await ollamaChatResponse(newMessages)
     if (data.message.tool_calls?.length > 0) {
+      const allReponse = []
       for (const toolCall of data.message.tool_calls) {
         const toolFunc = toolCall.function.name;
         const args = toolCall.function.arguments;
@@ -125,10 +127,11 @@ export const McpChatbot = () => {
         console.log(toolRequest)
         const resp = await McpCallTool(toolRequest)
         console.log(resp)
-        setMessages(msg => {
-          return msg.map(m => m.id === loadingMsg.id ? {...m, isLoading: false, content: resp.content[0].text}: m)
-        });
+        allReponse.push(resp.content[0].text)
       }
+      setMessages(msg => {
+        return msg.map(m => m.id === loadingMsg.id ? {...m, isLoading: false, content: allReponse}: m)
+      });
     } else if (data.message.content !== "") {
       setMessages(msg => {
         return msg.map(m => m.id === loadingMsg.id ? {...m, isLoading: false, content: data.message.content}: m)
